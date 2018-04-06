@@ -18,10 +18,10 @@ VALIDATAION_DATA_PATH = "../../../../dataset/instagram/rnn/prediction/validation
 TEST_DATA_PATH = "../../../../dataset/instagram/rnn/prediction/test_total.txt"
 
 ## HYPER-PARAMETERS
-EMBEDDING_DIM = 10
+EMBEDDING_DIM = 50
 RNN_STEP = 5
 EPOCHS = 1000
-BATCH_SIZE = 10000
+BATCH_SIZE = 2000
 LEARNING_RATE = 0.001
 SAMPLE_NUM = 8
 
@@ -86,28 +86,34 @@ for i in xrange(EPOCHS):
 		print("Process Training Epoch: [{}/{}] Batch: [{}/{}] Loss: {}".format(i+1, EPOCHS, step, batch_num, _loss.cpu().data.numpy()[0]))
 
 
-	# Validation
-	drcf.eval()
-	step = 0
-	mrr = .0
-	batch_num = int(len(validation)/100) + 1
+	if (i+1) % 10 == 0:
+		# Validation
+		drcf.eval()
+		step = 0
+		mrr = .0
+		batch_num = int(len(validation)/100) + 1
 
-	batches = utils.batches(validation, 100, SAMPLE_NUM, venue_frequency)
-	for batch in batches:
-		user, candidate, checkins, _ = batch
-		input_user = Variable(torch.cuda.LongTensor(user))
-		input_checkins = Variable(torch.cuda.LongTensor(checkins))
-		
-		# Optimizing
-		rank = drcf.module.evaluation(input_user, input_checkins).cpu().data.numpy()
-		mrr += get_eval_score(candidate, rank)
+		batches = utils.batches(validation, 100, SAMPLE_NUM, venue_frequency)
+		for batch in batches:
+			user, candidate, checkins, _ = batch
+			input_user = Variable(torch.cuda.LongTensor(user))
+			input_checkins = Variable(torch.cuda.LongTensor(checkins))
+			
+			# Optimizing
+			rank = drcf.module.evaluation(input_user, input_checkins).cpu().data.numpy()
+			mrr += get_eval_score(candidate, rank)
 
-		# Printing Progress
-		step+=1
+			# Printing Progress
+			step+=1
+			sys.stdout.write("\033[F")
+			sys.stdout.write("\033[K")
+			print("Process Evaluation Epoch: [{}/{}] Batch: [{}/{}]".format(i+1, EPOCHS, step, batch_num))
+
 		sys.stdout.write("\033[F")
 		sys.stdout.write("\033[K")
-		print("Process Evaluation Epoch: [{}/{}] Batch: [{}/{}]".format(i+1, EPOCHS, step, batch_num))
+		print("Process Epoch: [{}/{}] loss : [{}] / Eval: [{}]\n".format(i+1, EPOCHS, loss, mrr/len(validation)))
 
-	sys.stdout.write("\033[F")
-	sys.stdout.write("\033[K")
-	print("Process Epoch: [{}/{}] loss : [{}] / Eval: [{}]\n".format(i+1, EPOCHS, loss, mrr/len(validation)))
+	else:
+		sys.stdout.write("\033[F")
+		sys.stdout.write("\033[K")
+		print("Process Epoch: [{}/{}] loss : [{}]\n".format(i+1, EPOCHS, loss, ))

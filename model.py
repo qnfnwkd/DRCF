@@ -97,14 +97,20 @@ class DRCF(nn.Module):
 		## Positive
 		mlrp = torch.cat([_mlrp, q_m], 1)
 		mlrp = self.mlp_1(mlrp)
+		mlrp = nn.functional.relu(mlrp)
 		mlrp = self.mlp_2(mlrp)
+		mlrp = nn.functional.relu(mlrp)
 		mlrp = self.mlp_3(mlrp)
+		mlrp = nn.functional.relu(mlrp)
 
 		## Negative Shape: (batch, samples_num, 3*embedding_dim)
 		neg_mlrp = torch.cat([_mlrp.unsqueeze(1).expand(-1, self.samples_num, 2*self.embedding_dim), neg_q_m], 2)
 		neg_mlrp = self.mlp_1(neg_mlrp)
+		neg_mlrp = nn.functional.relu(neg_mlrp)
 		neg_mlrp = self.mlp_2(neg_mlrp)
+		neg_mlrp = nn.functional.relu(neg_mlrp)
 		neg_mlrp = self.mlp_3(neg_mlrp)
+		neg_mlrp = nn.functional.relu(neg_mlrp)
 
 		# RMF layer
 		_rmf_left = (d_gd_u + p_g_d)
@@ -159,9 +165,12 @@ class DRCF(nn.Module):
 		mlrp = torch.cat([d_m_u, p_m], 1).unsqueeze(1).expand(-1, self.venue_num, 2*self.embedding_dim) # Shape: (batch, 2*embedding_dim)
 		mlrp = torch.cat([mlrp, self.q_m.weight.unsqueeze(0).expand(mlrp.size(0), self.venue_num, self.embedding_dim)], 2)
 		mlrp = self.mlp_1(mlrp)
+		mlrp = nn.functional.relu(mlrp)
 		mlrp = self.mlp_2(mlrp)
+		mlrp = nn.functional.relu(mlrp)
 		mlrp = self.mlp_3(mlrp)
-
+		mlrp = nn.functional.relu(mlrp)
+		
 		# RMF layer
 		rmf_left = (d_gd_u + p_g_d).unsqueeze(1).expand(-1, self.venue_num, self.embedding_dim)
 		rmf_right = (d_md_u + p_m_d).unsqueeze(1).expand(-1, self.venue_num, self.embedding_dim)
